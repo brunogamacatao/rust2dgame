@@ -99,14 +99,15 @@ impl Game {
           self.stop();
           break;
         },
-        TimerTick{..} => redraw = true,
+        TimerTick{..} => {
+          redraw = true;
+          self.process_input();
+          self.update();              
+        },
         KeyDown{keycode: k, ..} => self.key_press(k),
         KeyUp{keycode: k, ..} => self.key_release(k),
         _ => (),
       }
-
-      self.process_input();
-      self.update();
     }    
   }
 
