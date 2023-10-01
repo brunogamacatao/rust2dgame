@@ -11,7 +11,7 @@ use std::collections::HashSet;
 use rand::{self, Rng};
 
 use crate::game::util::println;
-use crate::game::sprite::{Sprite, SimpleSprite, EightDirectionsSprite};
+use crate::game::sprite::{Sprite, simple_sprite::SimpleSprite, eight_directions_sprite::EightDirectionsSprite};
 use crate::game::config::CONFIG;
 
 pub struct Game {
