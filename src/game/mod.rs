@@ -8,71 +8,53 @@ use allegro_image::{self, ImageAddon};
 
 use allegro::keycodes::KeyCode;
 use std::collections::HashSet;
-use rand::{self, Rng};
 
 use crate::game::util::println;
-use crate::game::sprite::{Sprite, simple_sprite::SimpleSprite, eight_directions_sprite::EightDirectionsSprite};
+use crate::game::sprite::Sprite;
 use crate::game::config::CONFIG;
 
 pub struct Game {
   pub core: Core,
   pub running: bool,
   pub pressed_keys: HashSet<allegro::KeyCode>,
-  pub sprites: Vec<Box<dyn Sprite>>
+  pub sprites: Vec<Box<dyn Sprite>>,
+  pub display: Display,
+  pub timer: Timer,
+  pub font: Font
 }
 
 impl Game {
   pub fn new() -> Game {
     let core = Core::init().unwrap();
 
+    // Setup game engine
+    let font_addon = FontAddon::init(&core).unwrap();
+    ImageAddon::init(&core).unwrap();
+  
+    let display = Display::new(&core, CONFIG.width, CONFIG.height).unwrap();
+    let timer   = Timer::new(&core, 1.0 / 60.0).unwrap();
+    let font    = Font::new_builtin(&font_addon).unwrap();
+
     Game {
       core: core,
       running: true,
       pressed_keys: HashSet::new(),
-      sprites: Vec::new()
+      sprites: Vec::new(),
+      display, 
+      timer, 
+      font
     }
-  }
-
-  fn initialize(&mut self) {
-    let mut rng = rand::thread_rng();
-
-    // Create 10 random sprites
-    for _ in 1..10 {
-      let x = rng.gen_range(0..CONFIG.width - 181);
-      let y = rng.gen_range(0..CONFIG.height - 226);
-      let vx = 1 + rng.gen_range(0..5);
-      let vy = 1 + rng.gen_range(0..5);
-      let mut sprite = SimpleSprite::new(&self.core, x as f32, y as f32, "assets/mario.png");
-      sprite.vx = vx as f32;
-      sprite.vy = vy as f32;
-      self.sprites.push(Box::new(sprite));
-    }
-
-    // Create a playable sprite
-    let mario = EightDirectionsSprite::new(&self.core, 10.0, 10.0, "assets/mario.png");
-    self.sprites.push(Box::new(mario));
   }
 
   pub fn game_loop(&mut self) {
-    // Setup game engine
-    let font_addon = FontAddon::init(&self.core).unwrap();
-    ImageAddon::init(&self.core).unwrap();
-  
-    let display = Display::new(&self.core, CONFIG.width, CONFIG.height).unwrap();
-    let timer   = Timer::new(&self.core, 1.0 / 60.0).unwrap();
-    let font    = Font::new_builtin(&font_addon).unwrap();
-
-    // Initialize game entities
-    self.initialize();
-  
     // Setup events
     let queue = EventQueue::new(&self.core).unwrap();
 
     self.core.install_keyboard().unwrap();
     self.core.install_mouse().unwrap();
 
-    queue.register_event_source(display.get_event_source());
-    queue.register_event_source(timer.get_event_source());
+    queue.register_event_source(self.display.get_event_source());
+    queue.register_event_source(self.timer.get_event_source());
     queue.register_event_source(self.core.get_keyboard_event_source().unwrap());
     queue.register_event_source(self.core.get_mouse_event_source().unwrap());
 
@@ -82,13 +64,13 @@ impl Game {
     let mut redraw = true;
 
     // Game loop
-    timer.start();
+    self.timer.start();
     while self.is_running() {
       if redraw && queue.is_empty() {
         self.core.clear_to_color(black);
         self.draw();
-        self.core.draw_text(&font, white,
-          (display.get_width() / 2) as f32, (display.get_height() / 2) as f32,
+        self.core.draw_text(&self.font, white,
+          (self.display.get_width() / 2) as f32, (self.display.get_height() / 2) as f32,
           FontAlign::Centre, "Welcome to RustAllegro!");
         self.core.flip_display();
         redraw = false;
