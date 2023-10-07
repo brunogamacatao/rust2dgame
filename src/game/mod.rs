@@ -1,8 +1,9 @@
 pub mod config;
 pub mod sprite;
+pub mod scene;
 pub mod util;
 
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use allegro::{self, Core, Display, Timer, EventQueue, Color, DisplayClose, TimerTick, KeyDown, KeyUp};
 use allegro_font::{self, Font, FontAddon, FontAlign, FontDrawing};
 use allegro_image::{self, ImageAddon};
@@ -12,13 +13,16 @@ use crate::game::util::println;
 use crate::game::sprite::Sprite;
 use crate::game::config::CONFIG;
 
+use self::scene::Scene;
+
 pub struct Game {
   pub core: Core,
   pub running: bool,
   pub pressed_keys: HashSet<allegro::KeyCode>,
-  pub sprites: Vec<Box<dyn Sprite>>,
+  pub scenes: HashMap<String, Scene>,
   pub display: Display,
-  pub font: Font
+  pub font: Font,
+  pub current_scene: String
 }
 
 static mut GAME_INSTANCE: Option<Game> = Option::None;
@@ -38,9 +42,10 @@ impl Game {
       core: core,
       running: true,
       pressed_keys: HashSet::new(),
-      sprites: Vec::new(),
+      scenes: HashMap::new(),
       display, 
-      font
+      font,
+      current_scene: "main".to_string()
     }
   }
 
@@ -48,6 +53,10 @@ impl Game {
     unsafe {
       return GAME_INSTANCE.get_or_insert_with(|| Game::new());
     };
+  }
+
+  pub fn set_current_scene(&mut self, scene_name : &str) {
+    self.current_scene = scene_name.to_string();
   }
 
   pub fn game_loop(&mut self) {
@@ -100,7 +109,7 @@ impl Game {
 
   pub fn draw(&self) {
     // draw NPCs
-    let slice = &self.sprites[..];
+    let slice = &self.scenes[&self.current_scene].sprites[..];
     for s in slice {
       s.draw();
     }
@@ -115,7 +124,7 @@ impl Game {
   }
 
   pub fn update(&mut self) {
-    for b in self.sprites.iter_mut() {
+    for b in self.scenes.get_mut(&self.current_scene).unwrap().sprites.iter_mut() {
       let sprite : &mut dyn Sprite = b.as_mut();
       sprite.update();
       sprite.process_input(&self.pressed_keys);
