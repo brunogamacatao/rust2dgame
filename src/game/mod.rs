@@ -2,12 +2,11 @@ pub mod config;
 pub mod sprite;
 pub mod util;
 
+use std::collections::HashSet;
 use allegro::{self, Core, Display, Timer, EventQueue, Color, DisplayClose, TimerTick, KeyDown, KeyUp};
 use allegro_font::{self, Font, FontAddon, FontAlign, FontDrawing};
 use allegro_image::{self, ImageAddon};
-
 use allegro::keycodes::KeyCode;
-use std::collections::HashSet;
 
 use crate::game::util::println;
 use crate::game::sprite::Sprite;
@@ -19,9 +18,10 @@ pub struct Game {
   pub pressed_keys: HashSet<allegro::KeyCode>,
   pub sprites: Vec<Box<dyn Sprite>>,
   pub display: Display,
-  pub timer: Timer,
   pub font: Font
 }
+
+static mut GAME_INSTANCE: Option<Game> = Option::None;
 
 impl Game {
   pub fn new() -> Game {
@@ -32,7 +32,6 @@ impl Game {
     ImageAddon::init(&core).unwrap();
   
     let display = Display::new(&core, CONFIG.width, CONFIG.height).unwrap();
-    let timer   = Timer::new(&core, 1.0 / 60.0).unwrap();
     let font    = Font::new_builtin(&font_addon).unwrap();
 
     Game {
@@ -41,20 +40,26 @@ impl Game {
       pressed_keys: HashSet::new(),
       sprites: Vec::new(),
       display, 
-      timer, 
       font
     }
   }
 
+  pub fn get_instance() -> &'static mut Game {
+    unsafe {
+      return GAME_INSTANCE.get_or_insert_with(|| Game::new());
+    };
+  }
+
   pub fn game_loop(&mut self) {
     // Setup events
+    let timer = Timer::new(&self.core, 1.0 / 60.0).unwrap();
     let queue = EventQueue::new(&self.core).unwrap();
 
     self.core.install_keyboard().unwrap();
     self.core.install_mouse().unwrap();
 
     queue.register_event_source(self.display.get_event_source());
-    queue.register_event_source(self.timer.get_event_source());
+    queue.register_event_source(timer.get_event_source());
     queue.register_event_source(self.core.get_keyboard_event_source().unwrap());
     queue.register_event_source(self.core.get_mouse_event_source().unwrap());
 
@@ -64,7 +69,7 @@ impl Game {
     let mut redraw = true;
 
     // Game loop
-    self.timer.start();
+    timer.start();
     while self.is_running() {
       if redraw && queue.is_empty() {
         self.core.clear_to_color(black);

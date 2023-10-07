@@ -11,8 +11,7 @@ use crate::game::sprite::{simple_sprite::SimpleSprite, eight_directions_sprite::
 use crate::game::config::CONFIG;
 
 allegro_main! {
-  let mut game = Game::new();
-
+  let game = Game::get_instance();
   let mut rng = rand::thread_rng();
 
   // Create 10 random sprites
@@ -31,5 +30,5 @@ allegro_main! {
   let mario = EightDirectionsSprite::new(&game.core, 10.0, 10.0, "assets/mario.png");
   game.sprites.push(Box::new(mario));
 
-  game.game_loop();
+  game.game_loop();    
 }
