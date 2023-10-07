@@ -1,5 +1,6 @@
 use std::collections::HashSet;
-use allegro::{self, Core, Flag, Bitmap, BitmapLike};
+use allegro::{self, Flag, Bitmap, BitmapLike};
+use crate::game::Game;
 use crate::game::sprite::{Sprite, Point};
 use crate::game::config::CONFIG;
 
@@ -12,13 +13,13 @@ pub struct SimpleSprite {
 }
 
 impl SimpleSprite {
-  pub fn new(core: &Core, x: f32, y: f32, filename: &str) -> SimpleSprite {
+  pub fn new(x: f32, y: f32, filename: &str) -> SimpleSprite {
     SimpleSprite {
       x: x,
       y: y,
       vx: CONFIG.vx,
       vy: CONFIG.vy,
-      image: Bitmap::load(core, filename).unwrap()
+      image: Bitmap::load(&Game::get_instance().core, filename).unwrap()
     }
   }
 
@@ -27,8 +28,8 @@ impl SimpleSprite {
     self.y += dy;
   }
 
-  pub fn draw(&self, core: &Core) {
-    core.draw_bitmap(&self.image, self.x, self.y, Flag::zero());    
+  pub fn draw(&self) {
+    Game::get_instance().core.draw_bitmap(&self.image, self.x, self.y, Flag::zero());    
   }
 }  
 
@@ -50,9 +51,9 @@ impl Sprite for SimpleSprite {
     if self.y < 0.0 { self.vy = -self.vy }
   }
 
-  fn draw(&self, core: &Core) {
+  fn draw(&self) {
     let pos : Point = self.get_position();
-    core.draw_bitmap(&self.image, pos.x, pos.y, Flag::zero());    
+    Game::get_instance().core.draw_bitmap(&self.image, pos.x, pos.y, Flag::zero());    
   }
 
   fn process_input(&mut self, _pressed_keys: &HashSet<allegro::KeyCode>) {    

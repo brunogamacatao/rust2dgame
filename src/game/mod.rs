@@ -52,7 +52,7 @@ impl Game {
 
   pub fn game_loop(&mut self) {
     // Setup events
-    let timer = Timer::new(&self.core, 1.0 / 60.0).unwrap();
+    let timer = Timer::new(&self.core, (1.0 / CONFIG.fps) as f64).unwrap();
     let queue = EventQueue::new(&self.core).unwrap();
 
     self.core.install_keyboard().unwrap();
@@ -102,7 +102,7 @@ impl Game {
     // draw NPCs
     let slice = &self.sprites[..];
     for s in slice {
-      s.draw(&self.core);
+      s.draw();
     }
   }
 
