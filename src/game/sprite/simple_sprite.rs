@@ -27,10 +27,6 @@ impl SimpleSprite {
     self.x += dx;
     self.y += dy;
   }
-
-  pub fn draw(&self) {
-    Game::get_instance().core.draw_bitmap(&self.image, self.x, self.y, Flag::zero());    
-  }
 }  
 
 impl Sprite for SimpleSprite {
